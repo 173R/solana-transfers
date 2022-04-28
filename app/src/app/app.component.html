@@ -1,0 +1,101 @@
+<nz-layout>
+  <nz-header nz-row nzJustify="space-between">
+    <nz-col>
+      <b class="logo">Solana-app</b>
+    </nz-col>
+    <nz-col>
+      <button
+        [nzLoading]="loading"
+        *ngIf="!wallet.publicKey; else keyString"
+        nz-button
+        (click)="connectWallet()"
+      >
+        Connect Wallet
+      </button>
+      <ng-template #keyString>
+        <nz-row [nzGutter]="10">
+          <nz-col>
+            <b [style.color]="'white'">{{wallet.publicKey?.toString()?.slice(0, 10) + '...'}}</b>
+          </nz-col>
+          <nz-col>
+            <nz-avatar (click)="disconnect()" title="Logout" nzIcon="user"></nz-avatar>
+          </nz-col>
+        </nz-row>
+      </ng-template>
+    </nz-col>
+  </nz-header>
+    <nz-content *ngIf="wallet.publicKey; else plug">
+      <nz-row nzJustify="center" nzGutter="10">
+        <nz-col>
+          <b>Make donation</b>
+          <form nz-form [formGroup]="form" (ngSubmit)="sendLamports()">
+            <nz-form-item>
+              <nz-input-group nzSuffixIcon="user">
+                <input type="text" nz-input formControlName="name" placeholder="Name" />
+              </nz-input-group>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-input-group nzSuffixIcon="message">
+                <input type="text" nz-input formControlName="message" placeholder="Message" />
+              </nz-input-group>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-input-number
+                [style.width.%]="100"
+                prefix="LAM"
+                nzPlaceHolder="Lamports"
+                [nzMin]="1"
+                [nzStep]="1"
+                formControlName="lamports"
+                [nzFormatter]="formatterLamports"
+                [nzParser]="parserLamports"
+              >
+              </nz-input-number>
+            </nz-form-item>
+            <button nz-button [nzType]="'primary'">Send Lamports</button>
+          </form>
+          <button nz-button (click)="initialize()">init</button>
+        </nz-col>
+        <nz-col>
+          <b>List of donations</b>
+          <nz-card *ngFor="let transfer of transfers" style="width:300px;">
+            <nz-row nzGutter="10">
+              <nz-col nzSpan="4">
+                <nz-avatar [nzText]="transfer.name.slice(0, 1)"></nz-avatar>
+              </nz-col>
+              <nz-col nzSpan="20">
+                <nz-row nzJustify="space-between">
+                  <nz-col>{{transfer.name}}</nz-col>
+                  <nz-col>{{transfer.pubKey.toString().slice(0, 10) + '...'}}</nz-col>
+                </nz-row>
+              </nz-col>
+              <nz-col nzSpan="24">
+                Сообщение: {{transfer.message}}
+              </nz-col>
+              <nz-col nzSpan="24">
+                <b [style.font-size.px]="25">
+                  Lamports: 20
+                </b>
+              </nz-col>
+            </nz-row>
+            <!--<nz-col nzSpan="4">
+              <nz-avatar [nzText]="transfer.name.slice(0, 1)"></nz-avatar>
+            </nz-col>
+            <nz-col nzSpan="20">
+              <nz-row nzGutter="10">
+                <nz-col>{{transfer.name}}</nz-col>
+                <nz-col>{{transfer.pubKey.toString().slice(0, 10) + '...'}}</nz-col>
+              </nz-row>
+            </nz-col>-->
+          </nz-card>
+        </nz-col>
+      </nz-row>
+    </nz-content>
+    <ng-template #plug>
+      <nz-result nzStatus="403">
+        <div nz-result-extra>
+          <h3 [style.color]="'white'">Please, connect your wallet</h3>
+        </div>
+      </nz-result>
+    </ng-template>
+</nz-layout>
