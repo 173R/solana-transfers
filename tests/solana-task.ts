@@ -3,11 +3,11 @@ import {BN, Program} from "@project-serum/anchor";
 import { SolanaTask } from "../target/types/solana_task";
 import {PublicKey} from "@solana/web3.js";
 import * as assert from "assert";
+import {expect} from "chai";
 
 describe("solana-task", async () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-
   const program = anchor.workspace.SolanaTask as Program<SolanaTask>;
 
   const [storageAccountPDA, _] = await PublicKey
@@ -27,32 +27,34 @@ describe("solana-task", async () => {
         storageAccountPDA
     );
 
-    console.log('transactions', account.transactions);
+    expect(account).to.have.property('bump');
   });
 
-  it("Send", async () => {
-    const recipient_account = anchor.web3.Keypair.generate();
-
-    console.log('init balance', await provider.connection.getBalance(recipient_account.publicKey));
+  it("Send lamports", async () => {
+    const recipientAccount = anchor.web3.Keypair.generate();
+    const input = {
+        name: 'Name',
+        message: 'Message',
+        publicKey: provider.wallet.publicKey,
+        lamports: new BN(1000000),
+    }
 
     await program.methods
-        .send("Any name", "Any message", new BN(100000))
+        .send(input.name, input.message, input.lamports)
         .accounts({
           storageAccount: storageAccountPDA,
-          user: provider.wallet.publicKey,
-          recipient: recipient_account.publicKey,
+          user: input.publicKey,
+          recipient: recipientAccount.publicKey,
         }).rpc();
 
-    const account = await program.account.transactionStorage.fetch(
+    const output = (await program.account.transactionStorage.fetch(
         storageAccountPDA
-    );
+    )).transactions[0];
 
-      console.log('current balance', await provider.connection.getBalance(recipient_account.publicKey));
+    expect(
+      (await provider.connection.getBalance(recipientAccount.publicKey)).toString()
+    ).to.equal(input.lamports.toString());
 
-    console.log('send', account.transactions);
-
-    /*assert.ok(
-       account.crunchy.eq(new BN(1)) && account.smooth.eq(new BN(0))
-     );*/
+    expect(JSON.stringify(input)).to.equal(JSON.stringify(output));
   });
 });

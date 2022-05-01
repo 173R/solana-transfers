@@ -18,9 +18,10 @@ pub mod solana_task {
         ctx.remaining_accounts;
         let recipient_account = &mut ctx.accounts.recipient;
         ctx.accounts.storage_account.transactions.push(Transaction {
-            message,
             name,
-            pub_key: user_account.key(),
+            message,
+            public_key: user_account.key(),
+            lamports,
         });
 
 
@@ -71,9 +72,10 @@ impl TransactionStorage {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
 pub struct Transaction {
-    pub message: String,
     pub name: String,
-    pub pub_key: Pubkey,
+    pub message: String,
+    pub public_key: Pubkey,
+    pub lamports: u64,
 }
 
 #[derive(Accounts)]
@@ -93,6 +95,6 @@ pub struct Send<'info> {
     pub storage_account: Account<'info, TransactionStorage>,
     #[account(mut)]
     /// CHECK:
-    pub recipient: SystemAccount<'info>,
+    pub recipient: AccountInfo<'info>,
     pub system_program: Program <'info, System>,
 }
