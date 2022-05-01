@@ -29,12 +29,17 @@
       "accounts": [
         {
           "name": "user",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
           "name": "storageAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -46,6 +51,10 @@
         {
           "name": "message",
           "type": "string"
+        },
+        {
+          "name": "lamports",
+          "type": "u64"
         }
       ],
       "returns": null
@@ -68,6 +77,10 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
           }
         ]
       }
@@ -80,16 +93,20 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "message",
-            "type": "string"
-          },
-          {
             "name": "name",
             "type": "string"
           },
           {
-            "name": "pubKey",
+            "name": "message",
+            "type": "string"
+          },
+          {
+            "name": "publicKey",
             "type": "publicKey"
+          },
+          {
+            "name": "lamports",
+            "type": "u64"
           }
         ]
       }

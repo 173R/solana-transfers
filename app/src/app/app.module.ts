@@ -24,6 +24,7 @@ import {NzResultModule} from "ng-zorro-antd/result";
 import {NzSpinModule} from "ng-zorro-antd/spin";
 import {NzListModule} from "ng-zorro-antd/list";
 import {NzCardModule} from "ng-zorro-antd/card";
+import {NzMessageService} from "ng-zorro-antd/message";
 
 registerLocaleData(en);
 
@@ -53,7 +54,7 @@ registerLocaleData(en);
         NzListModule,
         NzCardModule
     ],
-  providers: [{ provide: NZ_I18N, useValue: en_US }],
+  providers: [{ provide: NZ_I18N, useValue: en_US }, NzMessageService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import {BN, Program} from "@project-serum/anchor";
 import { SolanaTask } from "../target/types/solana_task";
-import {PublicKey} from "@solana/web3.js";
+import {PublicKey, LAMPORTS_PER_SOL} from "@solana/web3.js";
 import * as assert from "assert";
 import {expect} from "chai";
 
@@ -10,7 +10,7 @@ describe("solana-task", async () => {
   anchor.setProvider(provider);
   const program = anchor.workspace.SolanaTask as Program<SolanaTask>;
 
-  const [storageAccountPDA, _] = await PublicKey
+  const [storageAccountPDA] = await PublicKey
       .findProgramAddress([
         anchor.utils.bytes.utf8.encode("donation-storage"),
       ], program.programId);
@@ -23,20 +23,23 @@ describe("solana-task", async () => {
           storageAccount: storageAccountPDA,
         }).rpc();
 
-    const account = await program.account.transactionStorage.fetch(
+    const storageAccount = await program.account.transactionStorage.fetch(
         storageAccountPDA
     );
 
-    expect(account).to.have.property('bump');
+    expect(provider.wallet.publicKey.toString()).to.equal(
+      storageAccount.owner.toString()
+    );
   });
 
   it("Send lamports", async () => {
-    const recipientAccount = anchor.web3.Keypair.generate();
+    const initialBalance = await provider.connection.getBalance(storageAccountPDA);
+
     const input = {
         name: 'Name',
         message: 'Message',
         publicKey: provider.wallet.publicKey,
-        lamports: new BN(1000000),
+        lamports: new BN(1),
     }
 
     await program.methods
@@ -44,16 +47,15 @@ describe("solana-task", async () => {
         .accounts({
           storageAccount: storageAccountPDA,
           user: input.publicKey,
-          recipient: recipientAccount.publicKey,
         }).rpc();
 
     const output = (await program.account.transactionStorage.fetch(
         storageAccountPDA
     )).transactions[0];
 
-    expect(
-      (await provider.connection.getBalance(recipientAccount.publicKey)).toString()
-    ).to.equal(input.lamports.toString());
+    expect(await provider.connection.getBalance(storageAccountPDA)).to.equal(
+      input.lamports.toNumber() + initialBalance
+    );
 
     expect(JSON.stringify(input)).to.equal(JSON.stringify(output));
   });

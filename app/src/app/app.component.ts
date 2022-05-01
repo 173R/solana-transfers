@@ -1,14 +1,12 @@
 import {Component, OnInit} from '@angular/core';
 import Wallet from '@project-serum/sol-wallet-adapter';
 import {Connection, PublicKey} from "@solana/web3.js";
-import IDL from "../idl.json"
-import {Program, AnchorProvider, Provider, web3} from "@project-serum/anchor";
+import {Program, AnchorProvider, web3, BN} from "@project-serum/anchor";
 import * as anchor from "@project-serum/anchor";
 import {FormBuilder, FormGroup} from "@angular/forms";
+import {NzMessageService} from "ng-zorro-antd/message";
+import {Transaction, idl} from "../consts";
 
-const voteAccount = web3.Keypair.generate();
-
-const idl = JSON.parse(JSON.stringify(IDL));
 
 @Component({
   selector: 'app-root',
@@ -16,29 +14,31 @@ const idl = JSON.parse(JSON.stringify(IDL));
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  title = 'app';
-  wallet: Wallet;
-  connection: Connection;
-  provider: AnchorProvider;
-  rpcUrl: string = 'http://127.0.0.1:8899';
-  programID = new PublicKey(idl.metadata.address);
+  owner!: PublicKey;
   form!: FormGroup;
-  loading = false;
+  statInput!: string;
+  wallet: Wallet;
+  provider: AnchorProvider;
+  program: Program;
+  storageAccountPDA!: PublicKey;
 
-  transfers: {
-    name: string,
-    message: string,
-    pubKey: PublicKey,
-  }[] = [];
+  rpcUrl: string = 'http://127.0.0.1:8899';
+
+  loading = false;
+  initialized = false;
+
+  transactions: Transaction[] = [];
 
   constructor(
     private fb: FormBuilder,
+    private message: NzMessageService,
   ) {
     this.wallet = new Wallet('https://www.sollet.io', this.rpcUrl);
-    this.connection = new Connection(this.rpcUrl);
     // @ts-ignore
-    this.provider = new AnchorProvider(this.connection, this.wallet, "processed");
+    this.provider = new AnchorProvider(new Connection(this.rpcUrl), this.wallet, "processed");
+    this.program = new Program(idl, new PublicKey(idl.metadata.address), this.provider);
   }
+
   ngOnInit() {
     this.form = this.fb.group({
       name: null,
@@ -47,137 +47,115 @@ export class AppComponent implements OnInit {
     })
   }
 
-  connectWallet(): void {
+  async connectWallet(): Promise<void> {
     this.loading = true;
-    this.wallet?.connect()
-      .then(() => console.log('Wallet connected'), err => console.error(err))
-      .finally(() => this.loading = false);
-  }
-
-  /*async fetchStoredData(): Promise<void> {
-    const program = new Program(idl, this.programID, this.provider);
-
-    const [storageAccountPDA, _] = await PublicKey
-      .findProgramAddress([
-        anchor.utils.bytes.utf8.encode("vote_account6"),
-      ], program.programId);
-
-    this.transfersHistory = await program.account.transactionStorage
-      .fetch(storageAccountPDA)
-      .then(account => account.transactions)
-      .catch(async () => await this.initialize())
-      anchor test --skip-local-validator
-
-    console.log(this.transfersHistory);
-  }*/
-
-
-  async sendLamports(): Promise<void> {
-    console.log('aaaa');
-    const program = new Program(idl, this.programID, this.provider);
-
-    const [storageAccountPDA, _] = await PublicKey
-      .findProgramAddress([
-        anchor.utils.bytes.utf8.encode("donation-storage"),
-      ], program.programId);
-
-    await program.methods
-      .send(this.form.value.name, this.form.value.message)
-      .accounts({
-        user: this.provider.wallet.publicKey,
-        storageAccount: storageAccountPDA,
-      }).rpc();
-
-
-    const account = await program.account.transactionStorage.fetch(
-      storageAccountPDA
-    );
-
-    /*this.transfers.push({
-      name: account.name,
-      message: account.message,
-      pubKey: account.pubKey.bn.toString(),
-    })*/
-
-    this.transfers = account.transactions;
-    console.log(this.transfers);
-
-    //console.log(account);
-  }
-
-  /*async votes(): Promise<void> {
-    const program = new Program(idl, this.programID, this.provider)
-    console.log(program);
     try {
-      const account = await program.account.voteAccount.fetch(
-        voteAccount.publicKey
-      );
-      console.log('votes', account.crunchy.toString(), account.smooth.toString());
-    } catch (error) {
-      console.error("could not getVotes: ", error)
-    }
-  }*/
+      await this.wallet?.connect();
+      [this.storageAccountPDA] = await PublicKey.findProgramAddress([
+          anchor.utils.bytes.utf8.encode('donation-storage'),
+        ], this.program.programId);
 
+      await this.fetchTransactions();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async disconnectWallet(): Promise<void> {
+    await this.wallet.disconnect();
+  }
+
+  async fetchTransactions(): Promise<void> {
+    this.loading = true;
+    try {
+      const storageAccount = await this.program.account.transactionStorage.fetch(
+        this.storageAccountPDA
+      );
+      this.owner = storageAccount.owner as PublicKey;
+      this.transactions = storageAccount.transactions as Array<Transaction>
+      this.initialized = true;
+    } catch (err) {
+      console.error(err);
+      this.createMessage('warning', 'The fundraising hasn\'t started yet')
+    } finally {
+      this.loading = false;
+    }
+  }
 
   async initialize(): Promise<void> {
-    const program = new Program(idl, this.programID, this.provider);
-
-    const [storageAccountPDA, _] = await PublicKey
-      .findProgramAddress([
-        anchor.utils.bytes.utf8.encode("donation-storage"),
-      ], program.programId);
-
-    console.log('id', program.programId.toString());
-
-    //console.log(program.)
-
+    this.loading = true;
     try {
-      /*await program.methods
+      await this.program.methods
         .initialize()
         .accounts({
           user: this.provider.wallet.publicKey,
-          storageAccount: storageAccountPDA,
-        }).rpc();*/
+          storageAccount: this.storageAccountPDA,
+        }).rpc();
 
-      const account = await program.account.transactionStorage.fetch(
-        storageAccountPDA
-      );
-
-      this.transfers = account.transactions;
-      console.log(this.transfers);
-
-      //console.log('pub', account.pubKey);
-
-      //console.log(account);
+      await this.fetchTransactions();
+      this.createMessage('success', 'Fundraising started');
     } catch (err) {
       console.error(err);
+      this.createMessage('error', 'Failed to start fundraising');
+    } finally {
+      this.loading = false;
     }
-
-    //console.log(await program.account.transactionStorage);
-
-
-
-    /*try {
-      await program.rpc.initialize({
-        accounts: {
-          voteAccount: voteAccount.publicKey,
-          user: this.provider.wallet.publicKey,
-          systemProgram: web3.SystemProgram.programId,
-        },
-        signers: [voteAccount],
-      });
-
-      const account = await program.account.voteAccount.fetch(
-        voteAccount.publicKey
-      );
-      console.log('initialize', account.crunchy.toString(), account.smooth.toString());
-    } catch (error) {
-      console.error("Transaction error: ", error);
-    }*/
   }
 
-  async disconnect(): Promise<void> {
-    await this.wallet.disconnect();
+  async sendLamports(): Promise<void> {
+    const userBalance = await this.provider.connection.getBalance(this.provider.wallet.publicKey);
+
+    if (this.form.value.lamports > userBalance) {
+      this.createMessage('error', 'Insufficient funds');
+      return;
+    }
+
+    this.loading = true;
+    try {
+      await this.program.methods
+        .send(
+          this.form.value.name ?? 'Secretly',
+          this.form.value.message ?? '',
+          new BN(this.form.value.lamports)
+        )
+        .accounts({
+          user: this.provider.wallet.publicKey,
+          storageAccount: this.storageAccountPDA,
+          recipient: this.owner,
+        }).rpc();
+
+      this.createMessage('success', 'Thanks for the donation');
+      await this.fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      this.createMessage('error', 'An error has occurred')
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getUserStatistic(): void {
+    const user = this.transactions.find(
+      transaction => transaction.publicKey.toString().includes(this.statInput)
+    );
+
+    this.transactions.reduce(
+      (acc, current) =>
+        current.publicKey.toString() === user?.publicKey.toString()
+          ? acc.add(current.lamports)
+          : acc,
+      new BN(0))
+  }
+
+  createMessage(type: string, message: string): void {
+    this.message.create(type, message);
+  }
+
+
+  slicePublicKey(key: PublicKey | null): string | null {
+    return key?.toString().slice(0, 10) + '...';
   }
 
   formatterLamports = (value: number): string => `${value} LMP`;
