@@ -2,7 +2,6 @@ import * as anchor from "@project-serum/anchor";
 import {BN, Program} from "@project-serum/anchor";
 import { SolanaTask } from "../target/types/solana_task";
 import {PublicKey, LAMPORTS_PER_SOL} from "@solana/web3.js";
-import * as assert from "assert";
 import {expect} from "chai";
 
 describe("solana-task", async () => {
@@ -39,7 +38,8 @@ describe("solana-task", async () => {
         name: 'Name',
         message: 'Message',
         publicKey: provider.wallet.publicKey,
-        lamports: new BN(1),
+        lamports: new BN(LAMPORTS_PER_SOL),
+        withdrawn: false,
     }
 
     await program.methods
@@ -58,5 +58,22 @@ describe("solana-task", async () => {
     );
 
     expect(JSON.stringify(input)).to.equal(JSON.stringify(output));
+  });
+
+  it("Withdraw", async () => {
+    const initOwnerBalance = await provider.connection.getBalance(provider.wallet.publicKey);
+    const initStorageBalance = await provider.connection.getBalance(storageAccountPDA);
+
+    await program.methods
+      .withdraw()
+      .accounts({
+        owner: provider.wallet.publicKey,
+        storageAccount: storageAccountPDA,
+      }).rpc();
+
+    const resultOwnerBalance = await provider.connection.getBalance(provider.wallet.publicKey);
+    const resultStorageBalance = await provider.connection.getBalance(storageAccountPDA);
+
+    expect(resultOwnerBalance - initOwnerBalance).to.equal(initStorageBalance - resultStorageBalance);
   });
 });

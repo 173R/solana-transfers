@@ -58,6 +58,28 @@
         }
       ],
       "returns": null
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "storageAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "returns": null
     }
   ],
   "accounts": [
@@ -107,6 +129,10 @@
           {
             "name": "lamports",
             "type": "u64"
+          },
+          {
+            "name": "withdrawn",
+            "type": "bool"
           }
         ]
       }

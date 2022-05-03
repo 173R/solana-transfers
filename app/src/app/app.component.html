@@ -1,7 +1,7 @@
 <nz-layout>
   <nz-header nz-row nzJustify="space-between">
     <nz-col>
-      <b class="logo">Solana-app</b>
+      <b class="logo">Solana-task</b>
     </nz-col>
     <nz-col>
       <button
@@ -15,6 +15,11 @@
       <ng-template #keyString>
         <nz-row [nzGutter]="10" nzAlign="middle">
           <nz-col>
+            <button nz-button *ngIf="wallet.publicKey?.toString() === owner?.toString()">
+              Withdraw funds
+            </button>
+          </nz-col>
+          <nz-col>
             <b [style.color]="'white'">{{slicePublicKey(wallet.publicKey)}}</b>
           </nz-col>
           <nz-col>
@@ -25,83 +30,85 @@
     </nz-col>
   </nz-header>
   <nz-spin [nzSpinning]="loading">
-    <nz-content *ngIf="wallet.publicKey; else plug">
-      <nz-row *ngIf="initialized" nzJustify="center" nzGutter="10">
-        <nz-col nzSpan="5">
-          <b>Make donation</b>
-          <form nz-form [formGroup]="form" (ngSubmit)="sendLamports()">
-            <nz-form-item>
-              <nz-input-group nzSuffixIcon="user">
-                <input type="text" nz-input formControlName="name" placeholder="Name" />
-              </nz-input-group>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-input-group nzSuffixIcon="message">
-                <input type="text" nz-input formControlName="message" placeholder="Message" />
-              </nz-input-group>
-            </nz-form-item>
-            <nz-form-item>
-              <nz-input-number
-                [style.width.%]="100"
-                prefix="LAM"
-                nzPlaceHolder="Lamports"
-                [nzMin]="1"
-                [nzStep]="1"
-                formControlName="lamports"
-              >
-              </nz-input-number>
-            </nz-form-item>
-            <button nz-button [nzType]="'primary'">Send Lamports</button>
-          </form>
-        </nz-col>
-        <nz-col nzSpan="5" *ngIf="transactions.length">
-          <b>List of donations</b>
-          <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
-            <input type="text" [(ngModel)]="statInput" nz-input placeholder="name or public key" />
-          </nz-input-group>
-          <ng-template #suffixButton>
-            <button (click)="getUserStatistic()" nz-button nzType="primary" nzSearch>
-              <i nz-icon nzType="search"></i>
-            </button>
-            <button nz-button nzType="primary" nzSearch>
-              <i nz-icon nzType="close" nzTheme="outline"></i>
-            </button>
-          </ng-template>
-          <ng-container *ngIf="!statInput">
-            <nz-card *ngFor="let transaction of transactions">
-              <nz-row [nzGutter]="[10, 5]">
-                <nz-col nzSpan="4">
-                  <nz-avatar [nzText]="transaction.name.slice(0, 1)"></nz-avatar>
-                </nz-col>
-                <nz-col nzSpan="20">
-                  <nz-row [style.margin-top.px]="3" nzJustify="space-between">
-                    <nz-col>{{transaction.name}}</nz-col>
-                    <nz-col>{{slicePublicKey(transaction.publicKey)}}</nz-col>
-                  </nz-row>
-                </nz-col>
-                <nz-col *ngIf="transaction.message || null" nzSpan="24">
-                  Message: {{transaction.message}}
-                </nz-col>
-                <nz-col nzSpan="24">
-                  <b [style.font-size.px]="20">
-                    Lamports: {{transaction.lamports}}
-                  </b>
-                </nz-col>
-              </nz-row>
-            </nz-card>
-          </ng-container>
-        </nz-col>
-      </nz-row>
-      <nz-row *ngIf="!initialized" nzJustify="center">
-        <button nz-button (click)="initialize()">Initialize</button>
-      </nz-row>
+    <nz-content>
+      <ng-container *ngIf="wallet.publicKey; else plug">
+        <nz-row *ngIf="initialized" nzJustify="center" nzGutter="10">
+          <nz-col nzSpan="5">
+            <b>Make donation</b>
+            <form nz-form [formGroup]="form" (ngSubmit)="sendLamports()">
+              <nz-form-item>
+                <nz-input-group nzSuffixIcon="user">
+                  <input type="text" nz-input formControlName="name" placeholder="Name" />
+                </nz-input-group>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-input-group nzSuffixIcon="message">
+                  <input type="text" nz-input formControlName="message" placeholder="Message" />
+                </nz-input-group>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-input-number
+                  [style.width.%]="100"
+                  prefix="LAM"
+                  nzPlaceHolder="Lamports"
+                  [nzMin]="1"
+                  [nzStep]="1"
+                  formControlName="lamports"
+                >
+                </nz-input-number>
+              </nz-form-item>
+              <button nz-button [nzType]="'primary'">Send Lamports</button>
+            </form>
+          </nz-col>
+          <nz-col nzSpan="5" *ngIf="transactions.length">
+            <b>List of donations</b>
+            <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
+              <input type="text" [(ngModel)]="statInput" nz-input placeholder="name or public key" />
+            </nz-input-group>
+            <ng-template #suffixButton>
+              <button (click)="getUserStatistic()" nz-button nzType="primary" nzSearch>
+                <i nz-icon nzType="search"></i>
+              </button>
+              <button nz-button nzType="primary" nzSearch>
+                <i nz-icon nzType="close" nzTheme="outline"></i>
+              </button>
+            </ng-template>
+            <ng-container *ngIf="!statInput">
+              <nz-card *ngFor="let transaction of transactions">
+                <nz-row [nzGutter]="[10, 5]">
+                  <nz-col nzSpan="4">
+                    <nz-avatar [nzText]="transaction.name.slice(0, 1)"></nz-avatar>
+                  </nz-col>
+                  <nz-col nzSpan="20">
+                    <nz-row [style.margin-top.px]="3" nzJustify="space-between">
+                      <nz-col>{{transaction.name}}</nz-col>
+                      <nz-col>{{slicePublicKey(transaction.publicKey)}}</nz-col>
+                    </nz-row>
+                  </nz-col>
+                  <nz-col *ngIf="transaction.message || null" nzSpan="24">
+                    Message: {{transaction.message}}
+                  </nz-col>
+                  <nz-col nzSpan="24">
+                    <b [style.font-size.px]="20">
+                      Lamports: {{transaction.lamports}}
+                    </b>
+                  </nz-col>
+                </nz-row>
+              </nz-card>
+            </ng-container>
+          </nz-col>
+        </nz-row>
+        <nz-row *ngIf="!initialized" nzJustify="center">
+          <button nz-button (click)="initialize()">Initialize</button>
+        </nz-row>
+      </ng-container>
+      <ng-template #plug>
+        <nz-result nzStatus="403">
+          <div nz-result-extra>
+            <h3 [style.color]="'white'">Please, connect your wallet</h3>
+          </div>
+        </nz-result>
+      </ng-template>
     </nz-content>
-    <ng-template #plug>
-      <nz-result nzStatus="403">
-        <div nz-result-extra>
-          <h3 [style.color]="'white'">Please, connect your wallet</h3>
-        </div>
-      </nz-result>
-    </ng-template>
   </nz-spin>
 </nz-layout>

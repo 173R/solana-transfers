@@ -9,4 +9,7 @@ export type Transaction = {
   message: string,
   publicKey: PublicKey,
   lamports: BN,
+  withdrawn: boolean,
 }
+
+export const storageMaxSize = 8 + 4 + 10 * (4 + 32 + 4 + 32 + 32) + 1;

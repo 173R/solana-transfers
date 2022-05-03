@@ -5,8 +5,7 @@ import {Program, AnchorProvider, web3, BN} from "@project-serum/anchor";
 import * as anchor from "@project-serum/anchor";
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {NzMessageService} from "ng-zorro-antd/message";
-import {Transaction, idl} from "../consts";
-
+import {Transaction, idl, storageMaxSize} from "../consts";
 
 @Component({
   selector: 'app-root',
@@ -16,11 +15,11 @@ import {Transaction, idl} from "../consts";
 export class AppComponent implements OnInit {
   owner!: PublicKey;
   form!: FormGroup;
+  storageAccountPDA!: PublicKey;
   statInput!: string;
   wallet: Wallet;
   provider: AnchorProvider;
   program: Program;
-  storageAccountPDA!: PublicKey;
 
   rpcUrl: string = 'http://127.0.0.1:8899';
 
@@ -44,7 +43,7 @@ export class AppComponent implements OnInit {
       name: null,
       message: null,
       lamports: 1,
-    })
+    });
   }
 
   async connectWallet(): Promise<void> {
@@ -58,6 +57,7 @@ export class AppComponent implements OnInit {
       await this.fetchTransactions();
     } catch (err) {
       console.error(err);
+      this.createMessage('error', 'Failed to connect')
     } finally {
       this.loading = false;
     }
@@ -76,6 +76,7 @@ export class AppComponent implements OnInit {
       this.owner = storageAccount.owner as PublicKey;
       this.transactions = storageAccount.transactions as Array<Transaction>
       this.initialized = true;
+      this.createMessage('success', 'Success')
     } catch (err) {
       console.error(err);
       this.createMessage('warning', 'The fundraising hasn\'t started yet')
@@ -85,6 +86,13 @@ export class AppComponent implements OnInit {
   }
 
   async initialize(): Promise<void> {
+    const rentExemptionAmount = await this.provider.connection.getMinimumBalanceForRentExemption(storageMaxSize);
+    const ownerBalance = await this.provider.connection.getBalance(this.provider.wallet.publicKey);
+
+    if (rentExemptionAmount > ownerBalance) {
+      this.createMessage('success', 'Insufficient funds');
+      return;
+    }
     this.loading = true;
     try {
       await this.program.methods
@@ -108,7 +116,7 @@ export class AppComponent implements OnInit {
     const userBalance = await this.provider.connection.getBalance(this.provider.wallet.publicKey);
 
     if (this.form.value.lamports > userBalance) {
-      this.createMessage('error', 'Insufficient funds');
+      this.createMessage('warning', 'Insufficient funds');
       return;
     }
 
@@ -123,10 +131,34 @@ export class AppComponent implements OnInit {
         .accounts({
           user: this.provider.wallet.publicKey,
           storageAccount: this.storageAccountPDA,
-          recipient: this.owner,
         }).rpc();
 
       this.createMessage('success', 'Thanks for the donation');
+      await this.fetchTransactions();
+    } catch (err) {
+      console.error(err);
+      this.createMessage('error', 'An error has occurred')
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async withdraw(): Promise<void> {
+    if (this.transactions.find(transaction => !transaction.withdrawn)) {
+      this.createMessage('warning', 'Funds for withdrawal were not found');
+      return;
+    }
+
+    this.loading = true;
+    try {
+      await this.program.methods
+        .withdraw()
+        .accounts({
+          user: this.provider.wallet.publicKey,
+          storageAccount: this.storageAccountPDA,
+        }).rpc();
+
+      this.createMessage('success', 'Funds have been withdrawn to your account');
       await this.fetchTransactions();
     } catch (err) {
       console.error(err);
