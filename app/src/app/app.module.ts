@@ -25,6 +25,7 @@ import {NzSpinModule} from "ng-zorro-antd/spin";
 import {NzListModule} from "ng-zorro-antd/list";
 import {NzCardModule} from "ng-zorro-antd/card";
 import {NzMessageService} from "ng-zorro-antd/message";
+import {NzEmptyModule} from "ng-zorro-antd/empty";
 
 registerLocaleData(en);
 
@@ -32,28 +33,29 @@ registerLocaleData(en);
   declarations: [
     AppComponent
   ],
-    imports: [
-        BrowserModule,
-        AppRoutingModule,
-        FormsModule,
-        HttpClientModule,
-        BrowserAnimationsModule,
-        NzButtonModule,
-        NzLayoutModule,
-        NzBreadCrumbModule,
-        NzMenuModule,
-        NzGridModule,
-        NzAvatarModule,
-        NzIconModule,
-        NzFormModule,
-        NzInputModule,
-        ReactiveFormsModule,
-        NzInputNumberModule,
-        NzResultModule,
-        NzSpinModule,
-        NzListModule,
-        NzCardModule
-    ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule,
+    BrowserAnimationsModule,
+    NzButtonModule,
+    NzLayoutModule,
+    NzBreadCrumbModule,
+    NzMenuModule,
+    NzGridModule,
+    NzAvatarModule,
+    NzIconModule,
+    NzFormModule,
+    NzInputModule,
+    ReactiveFormsModule,
+    NzInputNumberModule,
+    NzResultModule,
+    NzSpinModule,
+    NzListModule,
+    NzCardModule,
+    NzEmptyModule
+  ],
   providers: [{ provide: NZ_I18N, useValue: en_US }, NzMessageService],
   bootstrap: [AppComponent]
 })

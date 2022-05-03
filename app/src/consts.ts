@@ -12,4 +12,10 @@ export type Transaction = {
   withdrawn: boolean,
 }
 
-export const storageMaxSize = 8 + 4 + 10 * (4 + 32 + 4 + 32 + 32) + 1;
+export enum RpcUrl {
+  devnet = 'https://api.devnet.solana.com',
+  localhost = 'http://127.0.0.1:8899',
+
+}
+
+export const storageMaxSize = 8 + 4 + 10 * (4 + 32 + 4 + 32 + 32 + 8 + 1) + 1 + 32;

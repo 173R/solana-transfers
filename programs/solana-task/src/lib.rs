@@ -72,7 +72,7 @@ pub struct TransactionStorage {
 }
 
 impl TransactionStorage {
-    pub const MAX_SIZE: usize = 8 + 4 + 10 * (4 + 32 + 4 + 32 + 32) + 1;
+    pub const MAX_SIZE: usize = 4 + 10 * (4 + 32 + 4 + 32 + 32 + 8 + 1) + 1 + 32;
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
@@ -88,7 +88,7 @@ pub struct Transaction {
 pub struct Initialize<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(init, payer = user, space = TransactionStorage::MAX_SIZE, seeds = [b"donation-storage"], bump)]
+    #[account(init, payer = user, space = 8 + TransactionStorage::MAX_SIZE, seeds = [b"donation-storage"], bump)]
     pub storage_account: Account<'info, TransactionStorage>,
     pub system_program: Program <'info, System>,
 }

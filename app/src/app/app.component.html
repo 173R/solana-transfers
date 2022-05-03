@@ -8,6 +8,7 @@
         [nzLoading]="loading"
         *ngIf="!wallet.publicKey; else keyString"
         nz-button
+        nzType="primary"
         (click)="connectWallet()"
       >
         Connect Wallet
@@ -15,7 +16,13 @@
       <ng-template #keyString>
         <nz-row [nzGutter]="10" nzAlign="middle">
           <nz-col>
-            <button nz-button *ngIf="wallet.publicKey?.toString() === owner?.toString()">
+            <button
+              nz-button
+              *ngIf="wallet.publicKey?.toString() === owner?.toString()"
+              (click)="withdraw()"
+              nzType="primary"
+              nzDanger
+            >
               Withdraw funds
             </button>
           </nz-col>
@@ -49,31 +56,53 @@
               <nz-form-item>
                 <nz-input-number
                   [style.width.%]="100"
-                  prefix="LAM"
                   nzPlaceHolder="Lamports"
                   [nzMin]="1"
                   [nzStep]="1"
                   formControlName="lamports"
+                  [nzFormatter]="formatterLamports"
+                  [nzParser]="parserLamports"
                 >
                 </nz-input-number>
               </nz-form-item>
               <button nz-button [nzType]="'primary'">Send Lamports</button>
             </form>
+            <div *ngIf="transactions.length" [style.margin-top.px]="10">
+              <b>User statistics</b>
+              <nz-row>
+                <nz-col nzSpan="24">
+                  <nz-input-group [style.width.%]="100" nzSearch [nzAddOnAfter]="suffixIconButton">
+                    <input type="text" [(ngModel)]="publicKeyInput" nz-input placeholder="Public key" />
+                  </nz-input-group>
+                  <ng-template #suffixIconButton>
+                    <button nz-button nzType="primary" nzSearch (click)="getUserStatistic()">
+                      <i nz-icon nzType="search"></i>
+                    </button>
+                  </ng-template>
+                </nz-col>
+                <nz-col nzSpan="24" *ngIf="userStatistics">
+                  <nz-card>
+                    <nz-row>
+                      <nz-col nzSpan="24">
+                        Key:
+                      <b [title]="userStatistics?.publicKey">
+                        {{slicePublicKey(userStatistics?.publicKey)}}
+                      </b>
+                      </nz-col>
+                      <nz-col nzSpan="24">
+                        <b [style.font-size.px]="20">
+                          Total amount: {{userStatistics?.amount}}
+                        </b>
+                      </nz-col>
+                    </nz-row>
+                  </nz-card>
+                </nz-col>
+              </nz-row>
+            </div>
           </nz-col>
           <nz-col nzSpan="5" *ngIf="transactions.length">
             <b>List of donations</b>
-            <nz-input-group nzSearch nzSize="large" [nzAddOnAfter]="suffixButton">
-              <input type="text" [(ngModel)]="statInput" nz-input placeholder="name or public key" />
-            </nz-input-group>
-            <ng-template #suffixButton>
-              <button (click)="getUserStatistic()" nz-button nzType="primary" nzSearch>
-                <i nz-icon nzType="search"></i>
-              </button>
-              <button nz-button nzType="primary" nzSearch>
-                <i nz-icon nzType="close" nzTheme="outline"></i>
-              </button>
-            </ng-template>
-            <ng-container *ngIf="!statInput">
+            <ng-container>
               <nz-card *ngFor="let transaction of transactions">
                 <nz-row [nzGutter]="[10, 5]">
                   <nz-col nzSpan="4">
@@ -82,7 +111,9 @@
                   <nz-col nzSpan="20">
                     <nz-row [style.margin-top.px]="3" nzJustify="space-between">
                       <nz-col>{{transaction.name}}</nz-col>
-                      <nz-col>{{slicePublicKey(transaction.publicKey)}}</nz-col>
+                      <nz-col>
+                        <b [title]="transaction.publicKey">{{slicePublicKey(transaction.publicKey)}}</b>
+                      </nz-col>
                     </nz-row>
                   </nz-col>
                   <nz-col *ngIf="transaction.message || null" nzSpan="24">

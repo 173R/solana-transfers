@@ -7,7 +7,8 @@ solana_task = "AE3UkQZZVGMv4tHVgRVZX3ubBtemruQJPTpFDsYpjUtY"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+#cluster = "localnet"
+cluster = "https://api.devnet.solana.com"
 wallet = "/home/artem/.config/solana/id.json"
 
 [scripts]

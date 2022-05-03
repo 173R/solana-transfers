@@ -63,7 +63,7 @@
       "name": "withdraw",
       "accounts": [
         {
-          "name": "user",
+          "name": "owner",
           "isMut": true,
           "isSigner": false
         },
