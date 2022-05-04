@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "solana_task",
   "instructions": [
     {
@@ -139,6 +139,6 @@
     }
   ],
   "metadata": {
-    "address": "AE3UkQZZVGMv4tHVgRVZX3ubBtemruQJPTpFDsYpjUtY"
+    "address": "28NekMJybQSyo2QwUhs3SByNUMspd3gvszU2njheMvsk"
   }
 }
